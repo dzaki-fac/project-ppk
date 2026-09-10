@@ -263,20 +263,3 @@ Project dinyatakan memenuhi SRS apabila:
 * **Database:** MySQL
 * **Frontend:** Mengikuti frontend stack yang digunakan pada project
 * **Version Control:** Git & GitHub
-
----
-
-## 13. Document Structure
-
-Dokumentasi project dapat disusun sebagai berikut:
-
-```text
-docs/
-├── SRS/
-│   └── README.md
-│
-└── DESIGN/
-    └── README.md
-```
-
-Dokumen SRS menjadi acuan utama dalam pembagian tugas, implementasi fitur, integration, dan final testing.
