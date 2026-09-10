@@ -1,47 +1,51 @@
 @extends('layouts.app')
 
-@section('title', 'Login - ' . config('app.name', 'Tubes PPK Web'))
+@section('title', 'Masuk - ' . config('app.name', 'Tubes PPK Web'))
 
 @section('content')
-<div class="mx-auto max-w-md px-4 py-10">
-    <div class="rounded-xl border border-[#e3e3e0] dark:border-[#3E3E3A] bg-white dark:bg-[#161615] p-6">
-        <h1 class="text-xl font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">Login</h1>
-        <p class="text-sm text-[#706f6c] dark:text-[#A1A09A] mb-4">Masuk untuk lanjut ke dashboard.</p>
+<div class="mx-auto max-w-[1200px] px-4 sm:px-6 lg:px-8 py-16">
+    <div class="mx-auto max-w-md">
+        <h1 class="font-display text-[32px] leading-[1.25] tracking-[-0.8px] font-normal text-[#0c0a09] text-center">
+            Selamat datang <span class="hl">kembali</span>
+        </h1>
+        <p class="mt-2 text-[14px] text-[#78716c] text-center">Masuk untuk lanjut ke dashboard.</p>
 
-        <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-4">
-            @csrf
+        <div class="mt-8 rounded-[10px] border border-[#e8e6e5] bg-white p-6 shadow-[rgba(0,0,0,0.05)_0px_4px_16px_0px]">
+            <form method="POST" action="{{ route('login') }}" class="flex flex-col gap-4">
+                @csrf
 
-            <label class="flex flex-col gap-1 text-sm">
-                <span class="text-[#706f6c] dark:text-[#A1A09A]">Email</span>
-                <input type="email" name="email" value="{{ old('email') }}" required autofocus
-                    class="rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#FDFDFC] dark:bg-[#0a0a0a] px-3 py-2 text-[#1b1b18] dark:text-[#EDEDEC]">
-                @error('email')
-                    <span class="text-xs text-red-600">{{ $message }}</span>
-                @enderror
-            </label>
+                <label class="flex flex-col gap-1 text-[14px]">
+                    <span class="text-[#0c0a09]">Email</span>
+                    <input type="email" name="email" value="{{ old('email') }}" required autofocus placeholder="nama@email.com"
+                        class="seline-input rounded-[6px] border border-[#d6d3d1] bg-white px-3 py-2 text-[14px] text-[#0c0a09] placeholder-[#78716c]">
+                    @error('email')
+                        <span class="text-[13px] text-[#78716c]">{{ $message }}</span>
+                    @enderror
+                </label>
 
-            <label class="flex flex-col gap-1 text-sm">
-                <span class="text-[#706f6c] dark:text-[#A1A09A]">Password</span>
-                <input type="password" name="password" required
-                    class="rounded-lg border border-[#e3e3e0] dark:border-[#3E3E3A] bg-[#FDFDFC] dark:bg-[#0a0a0a] px-3 py-2 text-[#1b1b18] dark:text-[#EDEDEC]">
-                @error('password')
-                    <span class="text-xs text-red-600">{{ $message }}</span>
-                @enderror
-            </label>
+                <label class="flex flex-col gap-1 text-[14px]">
+                    <span class="text-[#0c0a09]">Password</span>
+                    <input type="password" name="password" required placeholder="••••••••"
+                        class="seline-input rounded-[6px] border border-[#d6d3d1] bg-white px-3 py-2 text-[14px] text-[#0c0a09] placeholder-[#78716c]">
+                    @error('password')
+                        <span class="text-[13px] text-[#78716c]">{{ $message }}</span>
+                    @enderror
+                </label>
 
-            <label class="flex items-center gap-2 text-sm text-[#706f6c] dark:text-[#A1A09A]">
-                <input type="checkbox" name="remember" value="1" class="rounded">
-                Ingat saya
-            </label>
+                <label class="flex items-center gap-2 text-[14px] text-[#78716c]">
+                    <input type="checkbox" name="remember" value="1" class="rounded accent-[#3ba6f1]">
+                    Ingat saya
+                </label>
 
-            <button type="submit" class="rounded-lg bg-[#F53003] px-5 py-2 text-sm font-medium text-white hover:bg-[#d92a03]">
-                Login
-            </button>
-        </form>
+                <button type="submit" class="rounded-full bg-[#3ba6f1] border border-[#3398e1] px-4 py-2 text-[14px] font-medium text-white hover:brightness-95">
+                    Masuk
+                </button>
+            </form>
+        </div>
 
-        <p class="mt-4 text-sm text-[#706f6c] dark:text-[#A1A09A]">
+        <p class="mt-4 text-[14px] text-[#78716c] text-center">
             Belum punya akun?
-            <a href="{{ route('register') }}" class="text-[#F53003] hover:underline">Register</a>
+            <a href="{{ route('register') }}" class="text-[#3398e1] hover:underline">Daftar</a>
         </p>
     </div>
 </div>
