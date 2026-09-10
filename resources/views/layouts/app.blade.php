@@ -43,6 +43,7 @@
                 <a href="{{ url('/') }}" class="px-3 h-8 inline-flex items-center text-[14px] text-[#78716c] hover:text-[#0c0a09]">Beranda</a>
                 <a href="{{ auth()->check() ? route('dashboard') : route('login') }}" class="px-3 h-8 inline-flex items-center text-[14px] text-[#78716c] hover:text-[#0c0a09]">Dashboard</a>
                 @auth
+                    <a href="{{ route('projects.index') }}" class="px-3 h-8 inline-flex items-center text-[14px] text-[#78716c] hover:text-[#0c0a09]">Projects</a>
                     @if (auth()->user()->role === 'admin')
                         <a href="{{ route('users.index') }}" class="px-3 h-8 inline-flex items-center text-[14px] text-[#78716c] hover:text-[#0c0a09]">Users</a>
                     @endif
