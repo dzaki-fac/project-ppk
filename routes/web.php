@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ProjectMemberController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -53,4 +54,17 @@ Route::middleware('auth')->group(function () {
         ->name('projects.members.store');
     Route::delete('projects/{project}/members/{user}', [ProjectMemberController::class, 'destroy'])
         ->name('projects.members.destroy');
+
+    // Tasks = isi dari project (Programmer 3)
+    // Nested (project dikunci): list & buat task di dalam 1 project.
+    // Akses dibatasi via ProjectPolicy: hanya owner/member project yang bisa view.
+    Route::prefix('projects/{project}')->name('projects.')->group(function () {
+        Route::get('tasks', [TaskController::class, 'index'])->name('tasks.index');
+        Route::get('tasks/create', [TaskController::class, 'create'])->name('tasks.create');
+        Route::post('tasks', [TaskController::class, 'store'])->name('tasks.store');
+    });
+
+    // Global (lintas project, selalu tampilkan badge nama project).
+    Route::resource('tasks', TaskController::class)->except(['show']);
+    Route::patch('/tasks/{task}/toggle', [TaskController::class, 'toggle'])->name('tasks.toggle');
 });
