@@ -3,120 +3,122 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
-use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
 class ProjectController extends Controller
 {
-    public function index(): View
+    /**
+     * Display owned projects and followed (member) projects.
+     */
+    public function index(Request $request): View
     {
-        $projects = Project::with('owner')
-            ->withCount('tasks')
-            ->withCount(['tasks as completed_tasks_count' => fn ($q) => $q->where('status', 'completed')])
-            ->withCount(['tasks as pending_tasks_count' => fn ($q) => $q->where('status', 'pending')])
-            ->orderBy('name')
-            ->paginate(12);
+        $user = $request->user();
 
-        return view('projects.index', compact('projects'));
+        $ownedProjects = Project::where('owner_id', $user->id)
+            ->with(['owner', 'members'])
+            ->withCount('members')
+            ->latest()
+            ->get();
+
+        $memberProjects = $user->projects()
+            ->with(['owner', 'members'])
+            ->withCount('members')
+            ->latest('projects.created_at')
+            ->get();
+
+        return view('projects.index', compact('ownedProjects', 'memberProjects'));
     }
 
+    /**
+     * Show the form for creating a new project.
+     */
     public function create(): View
     {
-        $project = new Project();
-        $users = User::orderBy('name')->get();
+        Gate::authorize('create', Project::class);
 
-        return view('projects.create', compact('project', 'users'));
+        return view('projects.create');
     }
 
+    /**
+     * Store a newly created project.
+     */
     public function store(Request $request): RedirectResponse
     {
+        Gate::authorize('create', Project::class);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'owner_id' => 'nullable|exists:users,id',
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
 
-        $validated['owner_id'] ??= $this->defaultOwnerId();
+        $project = Project::create([
+            'owner_id' => $request->user()->id,
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+        ]);
 
-        $project = Project::create($validated);
-        $project->members()->syncWithoutDetaching([$project->owner_id]);
-
-        return redirect()->route('projects.show', $project)
-            ->with('success', 'Project “'.$project->name.'” berhasil dibuat.');
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'Project berhasil dibuat.');
     }
 
+    /**
+     * Display the specified project (owner or member only).
+     */
     public function show(Request $request, Project $project): View
     {
+        Gate::authorize('view', $project);
+
         $project->load(['owner', 'members']);
 
-        $tasksQuery = $project->tasks()->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
-            ->orderBy('deadline')
-            ->orderByDesc('created_at');
+        $isOwner = $project->owner_id === $request->user()->id;
 
-        if ($request->filled('status') && in_array($request->status, ['pending', 'completed'])) {
-            $tasksQuery->where('status', $request->status);
-        }
-
-        if ($request->filled('priority') && in_array($request->priority, ['low', 'medium', 'high'])) {
-            $tasksQuery->where('priority', $request->priority);
-        }
-
-        $tasks = $tasksQuery->paginate(10)->withQueryString();
-
-        $total = $project->tasks()->count();
-        $completed = $project->tasks()->where('status', 'completed')->count();
-        $pending = $total - $completed;
-        $overdue = $project->tasks()->where('status', 'pending')->whereNotNull('deadline')->where('deadline', '<', now())->count();
-        $progress = $total > 0 ? (int) round($completed / $total * 100) : 0;
-
-        return view('projects.show', compact('project', 'tasks', 'total', 'completed', 'pending', 'overdue', 'progress'));
+        return view('projects.show', compact('project', 'isOwner'));
     }
 
-    public function edit(Project $project): View
+    /**
+     * Show the form for editing the project (owner only).
+     */
+    public function edit(Request $request, Project $project): View
     {
-        $users = User::orderBy('name')->get();
+        Gate::authorize('update', $project);
 
-        return view('projects.edit', compact('project', 'users'));
+        return view('projects.edit', compact('project'));
     }
 
+    /**
+     * Update the project (owner only).
+     */
     public function update(Request $request, Project $project): RedirectResponse
     {
+        Gate::authorize('update', $project);
+
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'owner_id' => 'required|exists:users,id',
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string'],
         ]);
 
         $project->update($validated);
 
-        return redirect()->route('projects.show', $project)
-            ->with('success', 'Project “'.$project->name.'” berhasil diperbarui.');
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('status', 'Project berhasil diperbarui.');
     }
 
-    public function destroy(Project $project): RedirectResponse
+    /**
+     * Remove the project (owner only).
+     */
+    public function destroy(Request $request, Project $project): RedirectResponse
     {
-        $name = $project->name;
-        $project->delete(); // tasks ikut terhapus via cascadeOnDelete
+        Gate::authorize('delete', $project);
 
-        return redirect()->route('projects.index')
-            ->with('success', 'Project “'.$name.'” beserta semua task-nya berhasil dihapus.');
-    }
+        $project->delete();
 
-    private function defaultOwnerId(): int
-    {
-        $user = User::orderBy('id')->first();
-
-        if (! $user) {
-            $user = User::create([
-                'name' => 'Demo User',
-                'email' => 'demo@jara.test',
-                'password' => 'password',
-                'role' => 'user',
-            ]);
-        }
-
-        return $user->id;
+        return redirect()
+            ->route('projects.index')
+            ->with('status', 'Project berhasil dihapus.');
     }
 }
