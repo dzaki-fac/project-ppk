@@ -24,6 +24,7 @@
             {{-- Nav tengah (optional) --}}
             <nav class="hidden md:flex items-center gap-6 text-sm">
                 <a href="{{ url('/') }}" class="font-medium text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#F53003]">Beranda</a>
+                <a href="{{ route('projects.index') }}" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Projects</a>
                 <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Reservasi</a>
                 <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Ruangan</a>
                 <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Alat</a>
