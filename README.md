@@ -260,6 +260,6 @@ Project dinyatakan memenuhi SRS apabila:
 ## 12. Technology Stack
 
 * **Backend:** Laravel
-* **Database:** MySQL
+* **Database:** SQLite
 * **Frontend:** Mengikuti frontend stack yang digunakan pada project
 * **Version Control:** Git & GitHub
