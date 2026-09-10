@@ -4,6 +4,111 @@
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    /* Seline Analytics — Colors */
+    --color-stone-canvas: #fafaf9;
+    --color-pure-white: #ffffff;
+    --color-stone-border: #e8e6e5;
+    --color-stone-muted: #d6d3d1;
+    --color-ash-gray: #a8a29e;
+    --color-warm-gray: #78716c;
+    --color-ink-black: #0c0a09;
+    --color-soot: #1c1917;
+    --color-sky-wash: #c1e1f7;
+    --color-cyan-signal: #3ba6f1;
+    --color-cyan-edge: #3398e1;
+
+    /* Typography */
+    --font-roobert: 'Inter Tight', 'Satoshi', ui-sans-serif, system-ui, sans-serif;
+    --font-inter: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+    --text-caption: 10px;
+    --text-body-lg: 16px;
+    --text-subheading: 20px;
+    --text-heading-sm: 32px;
+    --text-display: 52px;
+
+    /* Radius */
+    --radius-lg: 10px;
+    --radius-2xl: 16px;
+
+    /* Shadows */
+    --shadow-md: rgba(0, 0, 0, 0.05) 0px 4px 16px 0px;
+    --shadow-sm: rgba(0, 0, 0, 0.1) 0px 4px 6px -1px, rgba(0, 0, 0, 0.1) 0px 2px 4px -2px;
+    --shadow-subtle: rgba(0, 0, 0, 0.05) 0px 1px 2px 0px;
+    --shadow-xl: rgba(17, 12, 46, 0.12) 0px 12px 45px 0px;
+}
+
+body {
+    background-color: var(--color-stone-canvas);
+    color: var(--color-ink-black);
+    font-family: var(--font-inter);
+    font-size: 14px;
+    line-height: 1.64;
+}
+
+.font-display {
+    font-family: var(--font-roobert);
+    letter-spacing: -0.025em;
+    font-weight: 400;
+}
+
+.card-flat {
+    background: #ffffff;
+    border: 1px solid #e8e6e5;
+    border-radius: 10px;
+    box-shadow: rgba(0, 0, 0, 0.05) 0px 4px 16px 0px;
+}
+
+.btn-primary {
+    background: #3ba6f1;
+    border: 1px solid #3398e1;
+    color: #fff;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-weight: 500;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: filter .15s ease;
+}
+.btn-primary:hover { filter: brightness(0.96); }
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid #e8e6e5;
+    color: #0c0a09;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-weight: 400;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.btn-ghost:hover { border-color: #d6d3d1; background: #fff; }
+
+.input-seline {
+    background: #fff;
+    border: 1px solid #d6d3d1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 14px;
+    width: 100%;
+    color: #0c0a09;
+}
+.input-seline::placeholder { color: #78716c; }
+.input-seline:focus {
+    outline: none;
+    border-color: #3ba6f1;
+    box-shadow: 0 0 0 2px rgba(59,166,241,.25);
+}
+
+.highlight-span {
+    color: #3398e1;
+    background: #c1e1f7;
+    border-radius: 6px;
+    padding: 2px 10px;
+    white-space: nowrap;
 }

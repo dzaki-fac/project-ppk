@@ -4,53 +4,68 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>@yield('title', config('app.name', 'Laravel'))</title>
+    <title>@yield('title', 'Jara — ' . config('app.name', 'Laravel'))</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Inter+Tight:wght@400;500&display=swap" rel="stylesheet">
     @if (file_exists(public_path('build/manifest.json')) || file_exists(public_path('hot')))
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @else
         <script src="https://cdn.tailwindcss.com"></script>
     @endif
 </head>
-<body class="bg-[#FDFDFC] dark:bg-[#0a0a0a] text-[#1b1b18] antialiased min-h-screen flex flex-col">
-    {{-- Top Navbar dengan Pop-up Profil --}}
-    <header class="sticky top-0 z-20 border-b border-[#e3e3e0] dark:border-[#3E3E3A] bg-white/80 dark:bg-[#161615]/80 backdrop-blur">
-        <div class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 flex h-16 items-center justify-between gap-4">
-            {{-- Brand --}}
-            <a href="{{ url('/') }}" class="flex items-center gap-2 font-semibold text-[#1b1b18] dark:text-[#EDEDEC]">
-                <span class="flex h-8 w-8 items-center justify-center rounded-lg bg-[#F53003] text-white text-sm font-bold">PPK</span>
-                <span class="hidden sm:inline">{{ config('app.name', 'Tubes PPK Web') }}</span>
+<body class="min-h-screen flex flex-col" style="background:#fafaf9;color:#0c0a09;">
+    {{-- Top nav — Seline style --}}
+    <header class="sticky top-0 z-20 bg-white/90 backdrop-blur" style="border-bottom:1px solid #e8e6e5;">
+        <div class="mx-auto flex h-16 items-center justify-between gap-4 px-4 sm:px-6 lg:px-8" style="max-width:1200px;">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-2 text-sm font-medium" style="color:#0c0a09;">
+                <span class="flex h-7 w-7 items-center justify-center rounded-full text-white text-xs font-semibold" style="background:#3ba6f1;">J</span>
+                <span class="font-display text-[18px] tracking-tight">Jara</span>
+                <span class="hidden sm:inline rounded-full px-2 py-0.5 text-[10px] font-medium tracking-widest uppercase" style="border:1px solid #e8e6e5;color:#78716c;">To-Do List</span>
             </a>
 
-            {{-- Nav tengah (optional) --}}
-            <nav class="hidden md:flex items-center gap-6 text-sm">
-                <a href="{{ url('/') }}" class="font-medium text-[#1b1b18] dark:text-[#EDEDEC] hover:text-[#F53003]">Beranda</a>
-                <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Reservasi</a>
-                <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Ruangan</a>
-                <a href="#" class="text-[#706f6c] dark:text-[#A1A09A] hover:text-[#1b1b18] dark:hover:text-[#EDEDEC]">Alat</a>
+            <nav class="hidden md:flex items-center gap-1 text-sm">
+                <a href="{{ route('dashboard') }}" class="px-3 py-2 rounded-full" style="{{ request()->routeIs('dashboard') || request()->routeIs('home') ? 'background:#1c1917;color:#fff;' : 'color:#78716c;' }}">Dashboard</a>
+                <a href="{{ route('projects.index') }}" class="px-3 py-2 rounded-full" style="{{ request()->routeIs('projects.*') ? 'background:#1c1917;color:#fff;' : 'color:#78716c;' }}">Projects</a>
+                <a href="{{ route('tasks.index') }}" class="px-3 py-2 rounded-full" style="{{ request()->routeIs('tasks.*') && !request()->routeIs('projects.*') ? 'background:#1c1917;color:#fff;' : 'color:#78716c;' }}">Tasks</a>
+                <a href="{{ route('settings') }}" class="px-3 py-2" style="color:#78716c;">Settings</a>
             </nav>
 
-            {{-- Right: Profile Pop-up --}}
             <div class="flex items-center gap-2">
+                <a href="{{ route('projects.create') }}" class="btn-ghost !py-2 hidden sm:inline-flex">+ Project</a>
+                <a href="{{ route('tasks.create') }}" class="btn-primary !py-2">+ New task</a>
                 @auth
-                    <x-profile-popup :name="auth()->user()->name ?? auth()->user()->username" :email="auth()->user()->email" />
+                    <x-profile-popup :name="auth()->user()->name" :email="auth()->user()->email" />
                 @else
-                    {{-- Demo mode: tampilkan pop-up profil demo + login link --}}
-                    <div class="hidden sm:flex items-center gap-2">
-                        <a href="{{ Route::has('login') ? route('login') : '#' }}" class="px-4 py-2 text-sm text-[#1b1b18] dark:text-[#EDEDEC] hover:underline">Log in</a>
-                        <a href="{{ Route::has('register') ? route('register') : '#' }}" class="px-4 py-2 text-sm bg-[#1b1b18] dark:bg-[#eeeeec] dark:text-[#1C1C1A] text-white rounded-lg hover:bg-black">Register</a>
-                    </div>
-                    <x-profile-popup name="Demo User" email="demo@ppk.test" role="Mahasiswa" />
+                    <x-profile-popup name="Demo User" email="demo@jara.test" role="User" />
                 @endauth
             </div>
         </div>
     </header>
 
     <main class="flex-1">
-        @yield('content')
+        <div class="mx-auto px-4 sm:px-6 lg:px-8 py-10" style="max-width:1200px;">
+            @if (session('success'))
+                <div class="mb-6 rounded-[10px] bg-white px-4 py-3 text-sm" style="border:1px solid #e8e6e5;box-shadow:rgba(0,0,0,.05) 0px 4px 16px 0px;">
+                    <span class="font-medium" style="color:#0c0a09;">{{ session('success') }}</span>
+                </div>
+            @endif
+            @if ($errors->any())
+                <div class="mb-6 rounded-[10px] bg-white px-4 py-3 text-sm" style="border:1px solid #e8e6e5;">
+                    <ul class="list-disc pl-5" style="color:#78716c;">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
+            @yield('content')
+        </div>
     </main>
 
-    <footer class="border-t border-[#e3e3e0] dark:border-[#3E3E3A] py-6 text-center text-xs text-[#706f6c] dark:text-[#A1A09A]">
-        &copy; {{ date('Y') }} {{ config('app.name', 'Tubes PPK Web') }} — tubes-ppk-web
+    <footer class="py-8 text-center text-xs" style="border-top:1px solid #e8e6e5;color:#a8a29e;">
+        &copy; {{ date('Y') }} Jara — An Advanced To-Do List · Seline style
     </footer>
 </body>
 </html>
