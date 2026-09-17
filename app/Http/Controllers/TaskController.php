@@ -7,6 +7,7 @@ use App\Models\Task;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Rule;
 use Illuminate\View\View;
 
 class TaskController extends Controller
@@ -22,6 +23,9 @@ class TaskController extends Controller
 
         $viewableIds = $this->viewableProjectIds($request);
 
+        // FR-14 audit: satu-satunya raw SQL di file ini adalah string STATIS
+        // di bawah (tidak ada interpolasi input user). Semua input user hanya
+        // masuk via query builder binding (where/like) → prepared statement.
         $query = Task::with('project')->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
             ->orderBy('deadline')
             ->orderByDesc('created_at');
@@ -42,18 +46,24 @@ class TaskController extends Controller
             $query->whereIn('project_id', $viewableIds);
         }
 
-        if ($request->filled('status') && in_array($request->status, ['pending', 'completed'])) {
-            $query->where('status', $request->status);
+        // FR-14: filter status/priority memakai whitelist ketat (strict).
+        // Nilai di luar Task::STATUSES / Task::PRIORITIES DIABAIKAN
+        // (tidak masuk ke query) sehingga payload seperti
+        // "pending' OR '1'='1" tidak pernah menjadi SQL.
+        if ($request->filled('status') && in_array($request->query('status'), Task::STATUSES, true)) {
+            $query->where('status', $request->query('status'));
         }
 
-        if ($request->filled('priority') && in_array($request->priority, ['low', 'medium', 'high'])) {
-            $query->where('priority', $request->priority);
+        if ($request->filled('priority') && in_array($request->query('priority'), Task::PRIORITIES, true)) {
+            $query->where('priority', $request->query('priority'));
         }
 
         if ($request->filled('q')) {
+            // FR-14 audit: LIKE via binding (prepared statement), bukan raw SQL.
+            // Karakter kutip di $request->q diperlakukan sebagai literal.
             $query->where(function ($q) use ($request) {
-                $q->where('title', 'like', '%'.$request->q.'%')
-                    ->orWhere('description', 'like', '%'.$request->q.'%');
+                $q->where('title', 'like', '%'.$request->query('q').'%')
+                    ->orWhere('description', 'like', '%'.$request->query('q').'%');
             });
         }
 
@@ -110,14 +120,7 @@ class TaskController extends Controller
             Gate::authorize('view', $parentProject);
         }
 
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'priority' => 'required|in:low,medium,high',
-            'deadline' => 'nullable|date',
-            'status' => 'required|in:pending,completed',
-        ]);
+        $validated = $request->validate($this->taskRules());
 
         $targetProject = Project::findOrFail($validated['project_id']);
         Gate::authorize('view', $targetProject);
@@ -163,14 +166,7 @@ class TaskController extends Controller
             Gate::authorize('view', $parentProject);
         }
 
-        $validated = $request->validate([
-            'project_id' => 'required|exists:projects,id',
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'priority' => 'required|in:low,medium,high',
-            'deadline' => 'nullable|date',
-            'status' => 'required|in:pending,completed',
-        ]);
+        $validated = $request->validate($this->taskRules());
 
         $targetProject = Project::findOrFail($validated['project_id']);
         Gate::authorize('view', $targetProject);
@@ -236,8 +232,33 @@ class TaskController extends Controller
     }
 
     /**
+     * FR-14 (domain task): aturan validasi terpusat store/update.
+     * - title: wajib, string, 1–255 char (maxlength juga di Blade)
+     * - description: opsional, harus string bila ada (array/object ditolak)
+     * - priority/status: whitelist ketat via Rule::in (selain itu → 422)
+     * - deadline: opsional, harus tanggal valid (datetime-local lolos rule date)
+     * - project_id: wajib, integer, harus ada di projects.id
+     * Semua yang lolos dipakai via mass-assignment $validated saja,
+     * lalu disimpan via Eloquent (prepared statement, bukan raw SQL).
+     *
+     * @return array<string, mixed>
+     */
+    private function taskRules(): array
+    {
+        return [
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'title' => ['required', 'string', 'min:1', 'max:255'],
+            'description' => ['nullable', 'string', 'max:10000'],
+            'priority' => ['required', Rule::in(Task::PRIORITIES)],
+            'deadline' => ['nullable', 'date'],
+            'status' => ['required', Rule::in(Task::STATUSES)],
+        ];
+    }
+
+    /**
      * Ambil parent Project dari nested route /projects/{project}/...
      * Return Project model atau null (untuk route global /tasks/...).
+     * FR-14 audit: is_numeric guard + Eloquent binding, tidak ada raw SQL.
      */
     private function parentProjectFromRoute(Request $request): ?Project
     {
@@ -256,6 +277,7 @@ class TaskController extends Controller
 
     /**
      * ID project yang boleh diakses user (owned + member).
+     * FR-14 audit: murni Eloquent binding (where/pluck), tanpa raw SQL.
      *
      * @return array<int>
      */
