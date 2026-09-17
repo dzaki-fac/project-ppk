@@ -45,6 +45,10 @@ class ProjectController extends Controller
 
     /**
      * Store a newly created project.
+     *
+     * FR-12: create project + daftarkan owner sebagai member secara atomik.
+     * Dibungkus DB::transaction eksplisit agar tidak ada orphan project
+     * (project tanpa owner-membership) saat attach gagal.
      */
     public function store(Request $request): RedirectResponse
     {
@@ -55,11 +59,20 @@ class ProjectController extends Controller
             'description' => ['nullable', 'string'],
         ]);
 
-        $project = Project::create([
-            'owner_id' => $request->user()->id,
-            'name' => $validated['name'],
-            'description' => $validated['description'] ?? null,
-        ]);
+        $project = DB::transaction(function () use ($request, $validated) {
+            $project = Project::create([
+                'owner_id' => $request->user()->id,
+                'name' => $validated['name'],
+                'description' => $validated['description'] ?? null,
+            ]);
+
+            // Owner otomatis menjadi member (pivot project_members).
+            // syncWithoutDetaching agar idempotent dan tidak bentrok
+            // dengan unique(project_id, user_id).
+            $project->members()->syncWithoutDetaching([$request->user()->id]);
+
+            return $project;
+        });
 
         return redirect()
             ->route('projects.show', $project)
@@ -132,12 +145,17 @@ class ProjectController extends Controller
 
     /**
      * Remove the project (owner only).
+     *
+     * FR-13: hapus project beserta tasks + memberships secara atomik.
+     * Mengandalkan cascadeOnDelete() di FK (tasks.project_id,
+     * project_members.project_id) + detach eksplisit agar bersih
+     * di semua driver DB. Non-owner ditolak 403 via policy.
      */
     public function destroy(Request $request, Project $project): RedirectResponse
     {
         Gate::authorize('delete', $project);
 
-        // SRS-03: hapus project + tasks + memberships secara atomik.
+        // SRS-03 / FR-13: hapus project + tasks + memberships secara atomik.
         DB::transaction(function () use ($project) {
             $project->members()->detach();
             $project->delete();
