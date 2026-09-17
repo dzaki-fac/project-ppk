@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\View\View;
 
@@ -136,7 +137,11 @@ class ProjectController extends Controller
     {
         Gate::authorize('delete', $project);
 
-        $project->delete();
+        // SRS-03: hapus project + tasks + memberships secara atomik.
+        DB::transaction(function () use ($project) {
+            $project->members()->detach();
+            $project->delete();
+        });
 
         return redirect()
             ->route('projects.index')
