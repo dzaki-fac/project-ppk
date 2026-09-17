@@ -1,6 +1,32 @@
-Buat database schema untuk aplikasi web **Jara: An Advanced To-Do List** menggunakan Laravel dan MySQL.
+# SRS — Jara: An Advanced To-Do List
 
-### Requirement aplikasi
+## 1. Pecah Requirement Menjadi SRS
+
+| SRS | Fitur | Scope |
+|-----|-------|-------|
+| SRS-01 | Create List Management | Pengguna membuat daftar tugas baru dan otomatis menjadi pemilik (owner) |
+| SRS-02 | Delete List Management | Owner menghapus daftar beserta seluruh tugas dan keanggotaan di dalamnya |
+| SRS-03 | Transaction & Authorization | Proses penghapusan berjalan secara atomik dan permintaan dari pengguna yang tidak berwenang ditolak |
+| SRS-04 | Input Validation & SQL Security | Validasi seluruh input dan penggunaan prepared statement untuk mencegah SQL injection |
+
+## Pembagian 3 Programmer
+
+| Programmer | SRS | Fitur | Branch |
+|------------|-----|-------|--------|
+| P1 | SRS-01 | Create List Management | `feature/create-list` |
+| P2 | SRS-02 + SRS-03 | Delete List + Transaction & Authorization | `feature/delete-list` |
+| P3 | SRS-04 | Input Validation & SQL Security | `feature/input-security` |
+
+Mapping SRS ke implementasi (kode saat ini di `main`):
+
+* **SRS-01** → `ProjectController@store`: `owner_id` otomatis diisi dari user yang login (`$request->user()->id`), pembuat langsung menjadi owner. Route: `POST /projects` (`projects.store`).
+* **SRS-02** → `ProjectController@destroy`: hapus project beserta seluruh task (`cascadeOnDelete` di FK `tasks.project_id`) dan keanggotaan (`cascadeOnDelete` di FK `project_members.project_id`). Route: `DELETE /projects/{project}` (`projects.destroy`).
+* **SRS-03** → `Gate::authorize('delete', $project)` + `ProjectPolicy@delete` (hanya owner, non-owner ditolak 403) dan penghapusan dibungkus `DB::transaction` sehingga atomik.
+* **SRS-04** → semua input divalidasi via `$request->validate()` (nama wajib, `exists:users,id`, enum `priority`/`status`, dsb.) dan seluruh query lewat Eloquent Query Builder (prepared statement / parameter binding) sehingga aman dari SQL injection.
+
+---
+
+## 2. Database Schema
 
 Jara adalah aplikasi untuk mengelola tugas pribadi maupun tim. User dapat:
 
