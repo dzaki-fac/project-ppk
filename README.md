@@ -1,58 +1,265 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Jara: An Advanced To-Do List
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+## Software Requirements Specification
 
-## About Laravel
+Dokumen ini berisi spesifikasi kebutuhan perangkat lunak untuk aplikasi **Jara: An Advanced To-Do List**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Jara merupakan aplikasi web untuk mengelola tugas pribadi maupun tim. User dapat membuat project, mengelola task, menentukan prioritas dan deadline, serta berkolaborasi dengan user lain dalam sebuah project.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+---
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 1. Tujuan
 
-## Learning Laravel
+Sistem dikembangkan untuk membantu user:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+* Mengorganisasi tugas berdasarkan project.
+* Menentukan prioritas dan deadline tugas.
+* Memantau status penyelesaian tugas.
+* Berkolaborasi dengan user lain dalam project.
+* Memantau progress project.
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Admin dapat mengelola akun user dalam sistem.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+---
 
-## Agentic Development
+## 2. Aktor
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Admin
 
-```bash
-composer require laravel/boost --dev
+Admin dapat:
 
-php artisan boost:install
+* Login.
+* Melihat daftar user.
+* Menambahkan user.
+* Menghapus user.
+
+### User
+
+User dapat:
+
+* Register.
+* Login dan logout.
+* Membuat project.
+* Mengubah project.
+* Menghapus project.
+* Menambahkan member ke project.
+* Melihat member project.
+* Menghapus member project.
+* Membuat task.
+* Mengubah task.
+* Menghapus task.
+* Menentukan priority task.
+* Menentukan deadline task.
+* Menandai task sebagai selesai.
+* Melihat progress project.
+
+---
+
+## 3. Functional Requirements
+
+| ID    | Requirement               | Aktor       |
+| ----- | ------------------------- | ----------- |
+| FR-01 | Register                  | User        |
+| FR-02 | Login                     | User, Admin |
+| FR-03 | Logout                    | User, Admin |
+| FR-04 | User Management           | Admin       |
+| FR-05 | Project CRUD              | User        |
+| FR-06 | Project Member Management | Owner       |
+| FR-07 | Task CRUD                 | User        |
+| FR-08 | Task Priority             | User        |
+| FR-09 | Task Deadline             | User        |
+| FR-10 | Complete Task             | User        |
+| FR-11 | Project Progress          | User        |
+
+---
+
+## 4. Project & Team
+
+Setiap project memiliki seorang **owner**.
+
+Owner dapat menambahkan user lain sebagai member project.
+
+Struktur hubungan:
+
+```text
+User
+ ├── Owns ───────> Project
+ │                   │
+ │                   ├── Members
+ │                   │
+ │                   └── Tasks
+ │
+ └── Member ─────> Project
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+---
 
-## Contributing
+## 5. Task
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Setiap task berada di dalam satu project.
 
-## Code of Conduct
+Task memiliki:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+* Title
+* Description
+* Priority
+* Deadline
+* Status
 
-## Security Vulnerabilities
+### Priority
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+```text
+low
+medium
+high
+```
 
-## License
+### Status
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+```text
+pending
+completed
+```
+
+---
+
+## 6. Progress Monitoring
+
+Progress project dihitung berdasarkan jumlah task yang telah selesai.
+
+```text
+Progress = (Completed Tasks / Total Tasks) × 100%
+```
+
+Jika project belum memiliki task, progress bernilai `0%`.
+
+---
+
+## 7. Database
+
+Database menggunakan MySQL dengan tabel utama:
+
+```text
+users
+projects
+project_members
+tasks
+```
+
+### Relationship
+
+```text
+users 1 ───── N projects
+users N ───── N projects
+              │
+       project_members
+
+projects 1 ───── N tasks
+```
+
+Foreign key:
+
+```text
+projects.owner_id
+    -> users.id
+
+project_members.project_id
+    -> projects.id
+
+project_members.user_id
+    -> users.id
+
+tasks.project_id
+    -> projects.id
+```
+
+---
+
+## 8. Non-Functional Requirements
+
+### Security
+
+* Password harus disimpan dalam bentuk hash.
+* Setiap user hanya dapat mengakses fitur sesuai role dan permission.
+* Hanya owner yang dapat mengelola member project.
+
+### Usability
+
+Interface harus sederhana dan mudah digunakan.
+
+### Maintainability
+
+Implementasi mengikuti struktur dan standar Laravel yang digunakan dalam project.
+
+### Data Integrity
+
+Database harus menggunakan foreign key dan constraint untuk menjaga konsistensi data.
+
+---
+
+## 9. Scope
+
+### Included
+
+* Authentication
+* User management
+* Project management
+* Project member management
+* Task management
+* Task priority
+* Task deadline
+* Task completion
+* Progress monitoring
+
+### Not Included
+
+* Chat
+* Notification
+* File upload
+* Comments
+* Categories
+* Email notification
+* Real-time collaboration
+
+---
+
+## 10. Programmer Assignment
+
+| Programmer | Responsibility                      | Branch                  |
+| ---------- | ----------------------------------- | ----------------------- |
+| P1         | Authentication & User Management    | `feature/auth-user`     |
+| P2         | Project & Team Management           | `feature/project-team`  |
+| P3         | Task & Progress Management          | `feature/task-progress` |
+| PM         | Integration, testing & coordination | `main`                  |
+
+---
+
+## 11. Acceptance Criteria
+
+Project dinyatakan memenuhi SRS apabila:
+
+* [ ] User dapat register.
+* [ ] User dapat login dan logout.
+* [ ] Admin dapat mengelola user.
+* [ ] User dapat membuat project.
+* [ ] User dapat mengubah project.
+* [ ] User dapat menghapus project.
+* [ ] Owner dapat menambahkan member.
+* [ ] Owner dapat menghapus member.
+* [ ] User dapat membuat task.
+* [ ] User dapat mengubah task.
+* [ ] User dapat menghapus task.
+* [ ] User dapat menentukan priority.
+* [ ] User dapat menentukan deadline.
+* [ ] User dapat menyelesaikan task.
+* [ ] Sistem dapat menampilkan progress project.
+* [ ] Seluruh fitur utama dapat berjalan pada branch `main`.
+
+---
+
+## 12. Technology Stack
+
+* **Backend:** Laravel
+* **Database:** SQLite
+* **Frontend:** Mengikuti frontend stack yang digunakan pada project
+* **Version Control:** Git & GitHub

@@ -90,7 +90,28 @@ class ProjectController extends Controller
 
         $isOwner = $project->owner_id === $request->user()->id;
 
-        return view('projects.show', compact('project', 'isOwner'));
+        $tasksQuery = $project->tasks()
+            ->orderByRaw("CASE priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END")
+            ->orderBy('deadline')
+            ->orderByDesc('created_at');
+
+        if ($request->filled('status') && in_array($request->status, ['pending', 'completed'])) {
+            $tasksQuery->where('status', $request->status);
+        }
+
+        if ($request->filled('priority') && in_array($request->priority, ['low', 'medium', 'high'])) {
+            $tasksQuery->where('priority', $request->priority);
+        }
+
+        $tasks = $tasksQuery->paginate(10)->withQueryString();
+
+        $total = $project->tasks()->count();
+        $completed = $project->tasks()->where('status', 'completed')->count();
+        $pending = $total - $completed;
+        $overdue = $project->tasks()->where('status', 'pending')->whereNotNull('deadline')->where('deadline', '<', now())->count();
+        $progress = $total > 0 ? (int) round($completed / $total * 100) : 0;
+
+        return view('projects.show', compact('project', 'isOwner', 'tasks', 'total', 'completed', 'pending', 'overdue', 'progress'));
     }
 
     /**
@@ -134,6 +155,7 @@ class ProjectController extends Controller
     {
         Gate::authorize('delete', $project);
 
+        // SRS-03 / FR-13: hapus project + tasks + memberships secara atomik.
         DB::transaction(function () use ($project) {
             $project->members()->detach();
             $project->delete();

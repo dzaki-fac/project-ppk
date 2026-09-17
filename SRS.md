@@ -1,6 +1,6 @@
-Buat database schema untuk aplikasi web **Jara: An Advanced To-Do List** menggunakan Laravel dan MySQL.
+# SRS — Jara: An Advanced To-Do List
 
-### Requirement aplikasi
+## 1. Database Schema (pendukung)
 
 Jara adalah aplikasi untuk mengelola tugas pribadi maupun tim. User dapat:
 
@@ -122,3 +122,42 @@ Setelah migration selesai, buat/update model Eloquent dan relationship berikut:
 * `belongsTo(Project::class)`
 
 Jangan mengubah fitur di luar scope database yang sudah ditentukan.
+
+---
+
+## 2. Requirement (FR-12 – FR-14)
+
+Requirement konsolidasi (terbaru):
+
+> Pengguna dapat membuat daftar tugas baru dengan otomatis menjadi pemiliknya,
+> serta menghapus daftar yang dimilikinya beserta seluruh tugas dan keanggotaan
+> di dalamnya; setiap proses ini harus berjalan secara atomik sehingga jika
+> salah satu langkah gagal maka seluruh perubahan dibatalkan, permintaan dari
+> pengguna yang tidak berwenang harus ditolak, dan seluruh input pengguna wajib
+> divalidasi serta diproses menggunakan query terparameterisasi (prepared
+> statement) untuk mencegah SQL injection.
+
+Dipecah menjadi:
+
+| ID | Nama | Scope (dari requirement-mu) | Yang setengah / belum |
+|----|------|------------------------------|------------------------|
+| FR-12 | Create List Atomic + Secure | Buat list + otomatis `owner_id` = user login, validasi `name`/`description`, tolak unauthorized, binding query, atomik | Kurang: `DB::transaction` eksplisit |
+| FR-13 | Delete List Cascade Atomic | Hanya owner bisa hapus, `tasks` + `project_members` ikut hilang tanpa orphan, gagal → rollback | Ada: policy owner-only + `cascadeOnDelete` + transaction. Kurang: test cascade |
+| FR-14 | Input Validation & SQL-Injection Prevention | Semua input `name`/`description` tervalidasi, semua query via Eloquent/Builder (prepared statement), no raw SQL dari user, filter `status`/`priority` whitelist | Ada implisit. Kurang: penegasan eksplisit + test |
+
+Status terkini di `main`: FR-13 transaction `destroy` sudah ada (commit
+`feat(project)`), tinggal test cascade. FR-12 store belum dibungkus transaksi.
+FR-14 baru terpenuhi implisit (belum ada test keamanan).
+
+## Pembagian 3 Programmer (memakai ulang branch sebelumnya)
+
+| Programmer | Branch (dipakai ulang) | FR | Scope kerja |
+|------------|------------------------|----|-------------|
+| P1 | `feature/auth-user` | FR-14 (domain auth & user) | Penegasan validasi register/login/user-CRUD + hash password + session regenerate + test keamanan auth |
+| P2 | `feature/project-team` | FR-12 + FR-13 | `DB::transaction` eksplisit di `store` (create + daftarkan owner sebagai member, atomik) dan `destroy`; test cascade: tasks + members hilang, gagal → rollback, non-owner 403 |
+| P3 | `feature/task-progress` | FR-14 (domain task) | Penegasan whitelist `status`/`priority` + validasi title/description/deadline, audit tidak ada raw SQL dari input user + test |
+
+Alasan pembagian: FR-12 dan FR-13 sama-sama menyentuh `ProjectController` +
+`ProjectPolicy` (domain P2), sehingga satu orang mengerjakan agar tidak
+conflict. FR-14 yang cross-cutting dibelah dua per domain: auth/user ke P1,
+task ke P3.
