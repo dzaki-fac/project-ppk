@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,16 +25,18 @@ class UserController extends Controller
 
     public function store(Request $request)
     {
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Password::min(8)],
+            'name' => ['required', 'string', 'min:3', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
+            'password' => ['required', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
             'role' => ['required', Rule::in(['admin', 'user'])],
         ]);
 
         User::create([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name' => trim($validated['name']),
+            'email' => Str::lower(trim($validated['email'])),
             'password' => Hash::make($validated['password']),
             'role' => $validated['role'],
         ]);
@@ -48,15 +51,22 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
+        $request->merge(['email' => Str::lower(trim((string) $request->input('email')))]);
+
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
-            'password' => ['nullable', 'confirmed', Password::min(8)],
+            'name' => ['required', 'string', 'min:3', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'password' => ['nullable', 'string', 'confirmed', Password::min(8)->letters()->numbers()],
             'role' => ['required', Rule::in(['admin', 'user'])],
         ]);
 
-        $user->name = $validated['name'];
-        $user->email = $validated['email'];
+        // Cegah admin mencabut role admin dirinya sendiri (anti lockout).
+        if ($user->id === auth()->id() && $validated['role'] !== 'admin') {
+            return back()->withErrors(['role' => 'Tidak bisa menurunkan role akun sendiri.'])->withInput();
+        }
+
+        $user->name = trim($validated['name']);
+        $user->email = Str::lower(trim($validated['email']));
         $user->role = $validated['role'];
 
         if (! empty($validated['password'])) {
